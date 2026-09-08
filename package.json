@@ -1,0 +1,28 @@
+{
+  "name": "kana-bascula",
+  "version": "0.1.0",
+  "description": "Lectura de básculas Torrey (y similares) desde el navegador con Web Serial: sondeo, parser con banderas ST/US y unidad, estabilizador probado en producción, reconexión y simulador.",
+  "type": "module",
+  "main": "./dist/kana.umd.js",
+  "module": "./dist/kana.mjs",
+  "browser": "./dist/kana.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/kana.mjs",
+      "require": "./dist/kana.umd.js",
+      "default": "./dist/kana.mjs"
+    }
+  },
+  "files": ["dist", "src", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "python scripts/build.py",
+    "test": "node --test test/"
+  },
+  "keywords": ["web-serial", "bascula", "scale", "torrey", "pos", "etiquetas", "peso"],
+  "author": "chidaruma696",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/Chidaruma696/Kana.git" },
+  "homepage": "https://github.com/Chidaruma696/Kana#readme",
+  "bugs": { "url": "https://github.com/Chidaruma696/Kana/issues" },
+  "engines": { "node": ">=20" }
+}
