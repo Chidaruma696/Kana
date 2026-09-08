@@ -7,37 +7,53 @@
 <script src="../dist/kana.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <style>
-  /* Catppuccin Latte, plano: colores sólidos, sin degradados ni sombras. */
+  /* Catppuccin, plano. Latte de día, Mocha de noche (sigue al sistema; el botón ☾/☀ fuerza uno). */
   :root {
-    --base:#eff1f5; --mantle:#e6e9ef; --crust:#dce0e8; --surface0:#ccd0da; --surface1:#bcc0cc;
+    --base:#eff1f5; --mantle:#e6e9ef; --crust:#dce0e8; --surface0:#ccd0da; --surface1:#bcc0cc; --surface2:#acb0be;
     --text:#4c4f69; --subtext:#6c6f85; --overlay:#9ca0b0;
     --mauve:#8839ef; --pink:#ea76cb; --blue:#1e66f5; --lavender:#7287fd; --green:#40a02b; --red:#d20f39; --yellow:#df8e1d; --peach:#fe640b;
+    --on-accent:#ffffff; --papel:#ffffff;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-tema="latte"]) {
+    --base:#1e1e2e; --mantle:#181825; --crust:#11111b; --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
+    --text:#cdd6f4; --subtext:#a6adc8; --overlay:#6c7086;
+    --mauve:#cba6f7; --pink:#f5c2e7; --blue:#89b4fa; --lavender:#b4befe; --green:#a6e3a1; --red:#f38ba8; --yellow:#f9e2af; --peach:#fab387;
+    --on-accent:#1e1e2e; --papel:#181825;
+  } }
+  :root[data-tema="mocha"] {
+    --base:#1e1e2e; --mantle:#181825; --crust:#11111b; --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
+    --text:#cdd6f4; --subtext:#a6adc8; --overlay:#6c7086;
+    --mauve:#cba6f7; --pink:#f5c2e7; --blue:#89b4fa; --lavender:#b4befe; --green:#a6e3a1; --red:#f38ba8; --yellow:#f9e2af; --peach:#fab387;
+    --on-accent:#1e1e2e; --papel:#181825;
   }
   * { box-sizing:border-box; }
+  html { color-scheme: light dark; }
   body { margin:0; min-height:100vh; background:var(--base); color:var(--text); font:15px/1.55 -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
   header { background:var(--mantle); padding:18px 24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   header h1 { margin:0; font-size:22px; font-weight:700; letter-spacing:-.01em; }
   header h1 span { color:var(--mauve); }
-  header .kicker { font-size:13px; color:var(--subtext); }
+  header .kicker { font-size:13px; color:var(--subtext); flex:1; }
+  #btnTema { padding:6px 12px; font-size:15px; }
   .wrap { max-width:1040px; margin:22px auto 40px; padding:0 16px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
   @media (max-width:760px) { .wrap { grid-template-columns:1fr; } }
   .card { background:var(--mantle); border-radius:16px; padding:22px 24px; }
   .card h2 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:var(--mauve); margin:0 0 14px; }
-  button { font:inherit; font-weight:600; font-size:14px; border:0; background:var(--surface0); color:var(--text); padding:9px 18px; border-radius:10px; cursor:pointer; transition:background .12s; }
+  button { font:inherit; font-weight:600; font-size:14px; border:0; background:var(--surface0); color:var(--text); padding:9px 18px; border-radius:10px; cursor:pointer; transition:background .12s, opacity .12s; }
   button:hover { background:var(--surface1); }
-  button.primario { background:var(--mauve); color:#fff; }
-  button.primario:hover { background:#7326d6; }
-  button.suave { background:var(--blue); color:#fff; }
-  button.suave:hover { background:#1656d0; }
-  button:disabled { opacity:.45; cursor:not-allowed; }
-  input, select { font:inherit; padding:9px 12px; border:2px solid var(--surface0); border-radius:10px; background:#fff; color:var(--text); outline:none; }
+  button.primario { background:var(--mauve); color:var(--on-accent); }
+  button.primario:hover { opacity:.88; background:var(--mauve); }
+  button.suave { background:var(--blue); color:var(--on-accent); }
+  button.suave:hover { opacity:.88; background:var(--blue); }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  input, select { font:inherit; padding:9px 12px; border:2px solid var(--surface0); border-radius:10px; background:var(--papel); color:var(--text); outline:none; }
   input:focus { border-color:var(--mauve); }
   label { font-size:13px; color:var(--subtext); display:inline-flex; align-items:center; gap:8px; }
+  input[type=checkbox] { accent-color:var(--mauve); }
   .display { background:var(--crust); border-radius:12px; padding:20px 22px 12px; text-align:right; }
   #peso { font: 700 64px/1 -apple-system, 'Segoe UI', Roboto, sans-serif; color:var(--mauve); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
   #peso::after { content:' kg'; font-size:20px; font-weight:600; color:var(--subtext); letter-spacing:0; }
   #fase { font-size:13px; color:var(--subtext); min-height:20px; margin-top:8px; text-align:left; }
-  .chip { display:inline-block; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; }
+  .chip { display:inline-block; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; color:var(--on-accent); }
   .on { background:var(--green); } .off { background:var(--red); } .re { background:var(--yellow); }
   .fila { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
   table { width:100%; border-collapse:collapse; font-size:14px; }
@@ -50,17 +66,22 @@
   a { color:var(--blue); }
   code { background:var(--crust); padding:1px 6px; border-radius:6px; font-size:12.5px; }
   #log { font:12px/1.5 ui-monospace, Consolas, monospace; background:var(--crust); color:var(--text); padding:12px 14px; border-radius:10px; height:150px; overflow:auto; white-space:pre-wrap; margin-top:12px; }
-  .etq { width:80mm; height:40mm; border:1px dashed var(--surface1); padding:2mm; margin:4px; display:inline-block; text-align:center; background:#fff; }
+  .etq { width:80mm; height:40mm; border:1px dashed var(--surface1); padding:2mm; margin:4px; display:inline-block; text-align:center; background:#fff; color:#000; }
   .etq .n { font-weight:600; font-size:13px; height:34px; overflow:hidden; }
   .etq .p { font-size:16px; font-weight:700; }
-  @media print { body * { visibility:hidden; } #area, #area * { visibility:visible; } #area { position:absolute; left:0; top:0; } .etq { border:none; margin:0; page-break-after:always; } }
+  @media print { body * { visibility:hidden; } #area, #area * { visibility:visible; } #area { position:absolute; left:0; top:0; background:#fff; } .etq { border:none; margin:0; page-break-after:always; } }
 </style>
+<script>
+  // Aplica el tema guardado antes de pintar, para que no parpadee.
+  (function () { try { var t = localStorage.getItem('kana:tema'); if (t) document.documentElement.dataset.tema = t; } catch (e) {} })();
+</script>
 </head>
 <body>
 <header>
   <h1>Ka<span>na</span></h1>
   <span class="kicker">demo de báscula por Web Serial</span>
   <span id="chip" class="chip off">desconectada</span>
+  <button id="btnTema" title="Cambiar tema">☾</button>
 </header>
 
 <div class="wrap">
@@ -192,6 +213,18 @@
     items.forEach(function (it, i) { try { JsBarcode('#bc' + i, it.codigo, { format: 'EAN13', width: 1.6, height: 38, fontSize: 11, margin: 2 }); } catch (e) { console.warn(e); } });
     setTimeout(function () { window.print(); }, 250);
   });
+
+  // Tema: sigue al sistema; el botón fuerza latte/mocha y lo recuerda.
+  var btnTema = document.getElementById('btnTema');
+  function temaActual() { var f = document.documentElement.dataset.tema; if (f) return f; return matchMedia('(prefers-color-scheme: dark)').matches ? 'mocha' : 'latte'; }
+  function pintarTema() { btnTema.textContent = temaActual() === 'mocha' ? '☀' : '☾'; }
+  btnTema.addEventListener('click', function () {
+    var nuevo = temaActual() === 'mocha' ? 'latte' : 'mocha';
+    document.documentElement.dataset.tema = nuevo;
+    try { localStorage.setItem('kana:tema', nuevo); } catch (e) {}
+    pintarTema();
+  });
+  pintarTema();
 
   pintarTanda();
   if (K.Bascula.soportada) { crear(false).reconectar(); }
