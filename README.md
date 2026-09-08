@@ -1,45 +1,47 @@
+[🇪🇸 Español](README.es.md)
+
 <div align="center">
   <br/>
 
 # Kana
 
-**秤 · Básculas Torrey desde el navegador, con Web Serial y sin dependencias.**
+**秤 · Torrey scales from the browser, with Web Serial and no dependencies.**
 
 <br/>
 
 ![Web Serial](https://img.shields.io/badge/web%20serial-chrome%20%2F%20edge-4285f4?style=for-the-badge&logo=googlechrome&logoColor=white)
 [![CI](https://img.shields.io/github/actions/workflow/status/Chidaruma696/Kana/ci.yml?branch=main&style=for-the-badge&label=node%20--test)](https://github.com/Chidaruma696/Kana/actions)
-![Sin dependencias](https://img.shields.io/badge/dependencias-0-1b150d?style=for-the-badge)
-![Licencia MIT](https://img.shields.io/badge/licencia-MIT-1b150d?style=for-the-badge)
+![No dependencies](https://img.shields.io/badge/dependencies-0-1b150d?style=for-the-badge)
+![MIT License](https://img.shields.io/badge/license-MIT-1b150d?style=for-the-badge)
 
 <br/>
 
-*sondeo · parser con ST/US y unidad · estabilizador · reconexión · simulador*
+*polling · parser with ST/US and unit · stabilizer · reconnection · simulator*
 
 </div>
 
 ---
 
 > [!NOTE]
-> Kana es la mitad JavaScript de un par: lee la báscula; **[Tohru](https://github.com/Chidaruma696/Tohru)** (Python) le pone código de barras a lo que pesó. Cada una vive sola.
+> Kana is the JavaScript half of a pair: it reads the scale; **[Tohru](https://github.com/Chidaruma696/Tohru)** (Python) puts a barcode on whatever it weighed. Each one stands on its own.
 
 <br/>
 
-## ⚖️ Qué es
+## ⚖️ What it is
 
-Una báscula Torrey conectada por USB aparece como puerto serie. Con Web Serial, Chrome y Edge de escritorio pueden hablarle sin drivers ni instaladores: la página pide el puerto, el usuario lo autoriza una vez, y a partir de ahí el peso llega en vivo. Kana empaqueta todo lo que hay que saber para que eso funcione de verdad en un mostrador:
+A Torrey scale plugged in over USB shows up as a serial port. With Web Serial, desktop Chrome and Edge can talk to it with no drivers or installers: the page asks for the port, the user authorizes it once, and from then on the weight comes in live. Kana packages everything you need to know to make that actually work at a checkout counter:
 
-| 🔌 Conexión | ⚖️ Lectura | 🎯 Captura |
+| 🔌 Connection | ⚖️ Reading | 🎯 Capture |
 | --- | --- | --- |
-| Abre el puerto a 115200 8N1 y **sondea** con `P\r\n` cada 500 ms, porque la Torrey no transmite sola | Procesa solo la **última línea completa**, como mucho cada 200 ms, para filtrar ráfagas | **Estabilizador**: dos lecturas a menos de 3 g arrancan 800 ms de espera; al cumplirse, captura una sola vez |
-| Suelta siempre el *writer* aunque falle el envío; si no, el puerto se bloquea y la báscula enmudece sin avisar | Lee las banderas **ST/US** y la **unidad**; si la báscula está en libras, avisa y convierte | Detecta el **retiro** (menos de 20 g, o menos del 60 % de lo capturado) para no contar el mismo paquete dos veces |
-| **Reconecta sola** si se cae el cable, y recuerda el puerto para no pedirlo en cada visita | Expone la trama cruda para ver qué manda exactamente tu modelo | Captura manual cuando hace falta, marcando si el peso estaba estable |
+| Opens the port at 115200 8N1 and **polls** with `P\r\n` every 500 ms, because the Torrey doesn't transmit on its own | Processes only the **last complete line**, at most every 200 ms, to filter out bursts | **Stabilizer**: two readings within 3 g of each other start an 800 ms wait; once it elapses, it captures exactly once |
+| Always releases the *writer* even if the write fails; otherwise the port locks up and the scale goes silent without warning | Reads the **ST/US** flags and the **unit**; if the scale is set to pounds, it warns you and converts | Detects **removal** (under 20 g, or under 60 % of what was captured) so the same package is never counted twice |
+| **Reconnects on its own** if the cable drops, and remembers the port so it doesn't have to ask on every visit | Exposes the raw frame so you can see exactly what your model sends | Manual capture when you need it, flagging whether the weight was stable |
 
-Cada umbral salió de un problema real con una Torrey L-PCR en producción; están todos como opciones por si tu báscula pide otros.
+Every threshold came from a real problem with a Torrey L-PCR in production; they're all exposed as options in case your scale needs different ones.
 
 <br/>
 
-## 📲 Instalar
+## 📲 Install
 
 ```bash
 npm install kana-bascula
@@ -49,7 +51,7 @@ npm install kana-bascula
 import { Bascula } from 'kana-bascula';
 ```
 
-O sin empaquetador, con el UMD (expone `window.Kana`):
+Or without a bundler, using the UMD build (exposes `window.Kana`):
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/Chidaruma696/Kana@main/dist/kana.umd.js"></script>
@@ -57,40 +59,40 @@ O sin empaquetador, con el UMD (expone `window.Kana`):
 
 <br/>
 
-## 🧪 Uso
+## 🧪 Usage
 
 ```js
 import { Bascula } from 'kana-bascula';
 
 const bascula = new Bascula();
 
-bascula.on('peso',     p => pantalla.textContent = p.kg.toFixed(3));  // cada lectura
-bascula.on('estable',  p => agregarPesada(p.kg));                     // una vez por paquete
+bascula.on('peso',     p => pantalla.textContent = p.kg.toFixed(3));  // every reading
+bascula.on('estable',  p => agregarPesada(p.kg));                     // once per package
 bascula.on('retirado', () => mensaje('Coloca el siguiente'));
-bascula.on('estado',   s => chip(s.estado, s.mensaje));               // conectada · reconectando · desconectada
-bascula.on('aviso',    a => alert(a.mensaje));                        // p. ej. la báscula está en libras
+bascula.on('estado',   s => chip(s.estado, s.mensaje));               // connected · reconnecting · disconnected
+bascula.on('aviso',    a => alert(a.mensaje));                        // e.g. the scale is set to pounds
 
-botonConectar.onclick = () => bascula.conectar();     // pide el puerto al usuario
-bascula.reconectar();                                  // al cargar: usa el puerto ya autorizado, si lo hay
+botonConectar.onclick = () => bascula.conectar();     // asks the user for the port
+bascula.reconectar();                                  // on load: uses the already-authorized port, if any
 ```
 
-### Sin báscula
+### Without a scale
 
-El simulador tiene la misma interfaz y sirve para desarrollar, hacer demos y correr las pruebas:
+The simulator has the same interface and is handy for development, demos and running the tests:
 
 ```js
 import { basculaSimulada } from 'kana-bascula';
 
 const b = basculaSimulada({ intervalo: 250 });
 await b.conectar();
-b.simulador.colocar(1.25);   // manda unas lecturas inestables y luego se asienta
+b.simulador.colocar(1.25);   // sends a few unstable readings and then settles
 b.simulador.retirar();
-b.simulador.caer();          // simula que el cable se desconecta
+b.simulador.caer();          // simulates the cable being unplugged
 ```
 
-### Solo el estabilizador
+### Just the stabilizer
 
-Si ya tienes tu propia lectura del puerto, la lógica de captura es una clase pura sin temporizadores:
+If you already have your own port reader, the capture logic is a pure class with no timers:
 
 ```js
 import { Estabilizador } from 'kana-bascula';
@@ -102,7 +104,7 @@ for (const ev of e.alimentar(kg, Date.now(), flagST)) {
 }
 ```
 
-Abre `demo/index.html` en Chrome para verlo funcionar con la báscula real o con la simulada, ver las tramas crudas e imprimir etiquetas de prueba.
+Open `demo/index.html` in Chrome to see it working with a real or simulated scale, inspect the raw frames and print test labels.
 
 <br/>
 
@@ -110,50 +112,50 @@ Abre `demo/index.html` en Chrome para verlo funcionar con la báscula real o con
 
 ### `new Bascula(opciones)`
 
-| Opción | Default | Qué hace |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `baudRate`, `dataBits`, `stopBits`, `parity` | `115200`, `8`, `1`, `'none'` | Parámetros del puerto |
-| `sondeo` | `500` | ms entre cada `P\r\n`; `0` si tu báscula transmite sola |
-| `comandoSondeo` | `'P\r\n'` | Lo que se manda para pedir el peso |
-| `umbral` | `0.003` | kg de diferencia máxima entre lecturas "iguales" |
-| `espera` | `800` | ms quieto antes de capturar |
-| `minimo` | `0.020` | kg por debajo de los cuales el plato está vacío |
-| `fraccionRetiro` | `0.60` | Bajar de esta fracción del capturado cuenta como retiro |
-| `usarFlag` | `true` | La bandera `ST` de la báscula cuenta como lectura quieta |
-| `throttle` | `200` | ms mínimos entre procesados del buffer |
-| `parser` | `parsearTorrey` | Función `texto → lectura` si tu trama es distinta |
-| `filtros` | | Filtros para `requestPort`, p. ej. `[{ usbVendorId: 0x0403 }]` |
-| `recordar` | `true` | Recuerda el puerto para `reconectar()` en la siguiente visita |
-| `reintentos` | `3` | Intentos de reconexión si se cae la conexión |
-| `transporte` | `SerialTorrey` | Otro transporte con la misma interfaz (`TransporteSimulado`) |
+| `baudRate`, `dataBits`, `stopBits`, `parity` | `115200`, `8`, `1`, `'none'` | Port parameters |
+| `sondeo` | `500` | ms between each `P\r\n`; `0` if your scale transmits on its own |
+| `comandoSondeo` | `'P\r\n'` | What gets sent to request the weight |
+| `umbral` | `0.003` | Maximum difference in kg between two "equal" readings |
+| `espera` | `800` | ms the weight must hold still before capturing |
+| `minimo` | `0.020` | kg below which the platter counts as empty |
+| `fraccionRetiro` | `0.60` | Dropping below this fraction of the captured weight counts as removal |
+| `usarFlag` | `true` | The scale's `ST` flag counts as a stable reading |
+| `throttle` | `200` | Minimum ms between buffer processing passes |
+| `parser` | `parsearTorrey` | A `text → reading` function if your frame is different |
+| `filtros` | | Filters for `requestPort`, e.g. `[{ usbVendorId: 0x0403 }]` |
+| `recordar` | `true` | Remembers the port so `reconectar()` works on the next visit |
+| `reintentos` | `3` | Reconnection attempts if the connection drops |
+| `transporte` | `SerialTorrey` | Another transport with the same interface (`TransporteSimulado`) |
 
-Métodos: `conectar(puerto?)`, `reconectar()`, `desconectar()`, `capturar()`, `on(evento, fn)` (devuelve la función para quitarlo), `off()`. Propiedades: `estado`, `conectada`, `peso`, `estable`, `ultimaLectura`. `Bascula.soportada` dice si el navegador tiene Web Serial.
+Methods: `conectar(puerto?)`, `reconectar()`, `desconectar()`, `capturar()`, `on(evento, fn)` (returns the function to remove the listener), `off()`. Properties: `estado`, `conectada`, `peso`, `estable`, `ultimaLectura`. `Bascula.soportada` tells you whether the browser has Web Serial.
 
-Eventos: `peso` `{kg, bruto, unidad, estable}` · `fase` `{fase: vacio|pesando|estabilizando|estable|retirado, kg}` · `estable` `{kg}` · `retirado` `{kg}` · `captura` `{kg, manual}` · `estado` `{estado, mensaje}` · `trama` `{texto}` · `aviso` `{tipo, mensaje}` · `error` `{error}`.
+Events: `peso` `{kg, bruto, unidad, estable}` · `fase` `{fase: vacio|pesando|estabilizando|estable|retirado, kg}` · `estable` `{kg}` · `retirado` `{kg}` · `captura` `{kg, manual}` · `estado` `{estado, mensaje}` · `trama` `{texto}` · `aviso` `{tipo, mensaje}` · `error` `{error}`.
 
 ### `parsearTorrey(linea)`
 
-Acepta `ST,GS,+   1.250 kg`, `US,GS,-0,015 kg`, `1.250`, `1250 g`, `2.000 lb`. Devuelve `{ kg, bruto, unidad, unidadDeclarada, estable }` o `null` si la línea no trae un número. Libras, onzas y gramos se convierten a kg.
+Accepts `ST,GS,+   1.250 kg`, `US,GS,-0,015 kg`, `1.250`, `1250 g`, `2.000 lb`. Returns `{ kg, bruto, unidad, unidadDeclarada, estable }`, or `null` if the line doesn't carry a number. Pounds, ounces and grams are converted to kg.
 
 > [!IMPORTANT]
-> Los modelos de Torrey no mandan todos la misma trama. Activa "mostrar tramas crudas" en la demo con tu báscula, mira qué llega, y si el parser por defecto no la entiende, pásale el tuyo con la opción `parser`. Si tu trama encaja, abre un issue con el ejemplo para incluirla.
+> Not every Torrey model sends the same frame. Turn on "show raw frames" in the demo with your scale, look at what comes in, and if the default parser doesn't understand it, pass your own through the `parser` option. If your frame does fit, open an issue with the example so it can be added.
 
 <br/>
 
-## 🔬 Desarrollo
+## 🔬 Development
 
 ```bash
 git clone https://github.com/Chidaruma696/Kana.git
 cd Kana
-node --test test/        # parser, estabilizador y una pesada completa con el simulador
-python scripts/build.py  # regenera dist/ (ESM + UMD) sin toolchain
+node --test test/        # parser, stabilizer and a full weighing cycle with the simulator
+python scripts/build.py  # regenerates dist/ (ESM + UMD) with no toolchain
 ```
 
-La fuente es un solo archivo, `src/kana.js`. `dist/` se commitea para que el UMD sirva desde jsDelivr sin publicar.
+The source is a single file, `src/kana.js`. `dist/` is committed so the UMD build can be served from jsDelivr without publishing.
 
 <br/>
 
-## ⚖️ Licencia
+## ⚖️ License
 
 [MIT](LICENSE).
 
@@ -161,7 +163,7 @@ La fuente es un solo archivo, `src/kana.js`. `dist/` se commitea para que el UMD
 
 <div align="center">
 
-*Lo que pesa, pesa.*
+*What weighs, weighs.*
 
 秤 · はかり
 
