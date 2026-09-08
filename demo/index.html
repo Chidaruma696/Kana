@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kana · demo de báscula</title>
+<script src="../dist/kana.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<style>
+  :root { --tinta:#1b150d; --papel:#f6efe0; --rojo:#c62b3c; --tenue:#7a6f5f; --borde:#1b150d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 'Segoe UI', Arial, sans-serif; background:var(--papel); color:var(--tinta); }
+  header { border-bottom:3px solid var(--tinta); padding:12px 18px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:22px; letter-spacing:.5px; text-transform:uppercase; }
+  header .kicker { font-size:11px; color:var(--tenue); letter-spacing:.15em; text-transform:uppercase; }
+  .wrap { max-width:1100px; margin:16px auto; padding:0 14px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .card { background:#fff; border:3px solid var(--borde); padding:14px 16px; box-shadow:5px 5px 0 var(--tinta); }
+  .card h2 { font-size:11px; text-transform:uppercase; letter-spacing:.15em; color:var(--tenue); margin:0 0 10px; }
+  button { font:inherit; font-weight:700; border:2.5px solid var(--borde); background:#fff; padding:7px 12px; cursor:pointer; box-shadow:3px 3px 0 var(--tinta); }
+  button:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--tinta); }
+  button.primario { background:var(--rojo); color:#fff; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  input, select { font:inherit; padding:7px 9px; border:2.5px solid var(--borde); background:#fff; }
+  #peso { font-size:64px; font-weight:900; color:var(--rojo); line-height:1; font-variant-numeric:tabular-nums; }
+  #fase { font-size:12px; color:var(--tenue); min-height:18px; margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
+  .chip { display:inline-block; padding:2px 10px; border:2px solid var(--borde); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; transform:rotate(-2deg); }
+  .on { background:#d9f3dc; } .off { background:#f8d7da; } .re { background:#fff3cd; }
+  .fila { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid #ddd; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .sub { color:var(--tenue); font-size:12px; }
+  #log { font:11px/1.4 ui-monospace, Consolas, monospace; background:var(--tinta); color:#eee; padding:8px; height:140px; overflow:auto; white-space:pre-wrap; }
+  .etq { width:80mm; height:40mm; border:1px dashed #999; padding:2mm; margin:4px; display:inline-block; text-align:center; background:#fff; }
+  .etq .n { font-weight:800; font-size:13px; height:34px; overflow:hidden; }
+  .etq .p { font-size:16px; font-weight:900; }
+  @media print { body * { visibility:hidden; } #area, #area * { visibility:visible; } #area { position:absolute; left:0; top:0; } .etq { border:none; margin:0; page-break-after:always; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Kana</h1>
+  <span class="kicker">秤 · demo de báscula por Web Serial</span>
+  <span id="chip" class="chip off">desconectada</span>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Báscula</h2>
+    <div id="peso">0.000</div>
+    <div id="fase">Sin conexión</div>
+    <div class="fila">
+      <button id="btnConectar" class="primario">Conectar báscula</button>
+      <button id="btnSimular">Usar báscula simulada</button>
+      <button id="btnCapturar" disabled>Capturar ahora</button>
+    </div>
+    <div class="fila" id="controlesSim" hidden>
+      <span class="sub">Simulador:</span>
+      <input id="pesoSim" type="number" step="0.001" min="0" value="1.250" style="width:110px">
+      <button id="btnColocar">Colocar</button>
+      <button id="btnRetirar">Retirar</button>
+      <button id="btnCaer">Simular desconexión</button>
+    </div>
+    <div class="fila">
+      <label><input type="checkbox" id="swLog"> Mostrar tramas crudas</label>
+    </div>
+    <div id="log" hidden></div>
+  </section>
+
+  <section class="card">
+    <h2>Tanda</h2>
+    <div class="fila">
+      <label>PLU <input id="plu" type="number" min="1" max="99999" value="90050" style="width:100px"></label>
+      <label>Nombre <input id="nombre" value="Producto de prueba" style="width:180px"></label>
+    </div>
+    <table><thead><tr><th>#</th><th>Peso</th><th>Origen</th><th></th></tr></thead><tbody id="tanda"></tbody></table>
+    <div class="fila">
+      <span id="resumen" class="sub"></span>
+      <button id="btnImprimir" class="primario">Imprimir etiquetas</button>
+      <button id="btnLimpiar">Limpiar</button>
+    </div>
+    <p class="sub">La demo genera un código de identidad <code>08 + PLU + secuencia</code> con un contador local, solo para verlo impreso. En una app real la secuencia la reserva tu base de datos (ver <a href="https://github.com/Chidaruma696/Tohru">Tohru</a>).</p>
+  </section>
+</div>
+
+<div id="area"></div>
+
+<script>
+(function () {
+  var K = window.Kana;
+  var elPeso = document.getElementById('peso'), elFase = document.getElementById('fase'), elChip = document.getElementById('chip');
+  var elLog = document.getElementById('log'), swLog = document.getElementById('swLog');
+  var bascula = null, tanda = [], secuencia = parseInt(localStorage.getItem('kana:demo:seq') || '0', 10);
+
+  function log(t) { if (!swLog.checked) return; elLog.textContent += t; elLog.scrollTop = elLog.scrollHeight; }
+  swLog.addEventListener('change', function () { elLog.hidden = !swLog.checked; });
+
+  function pintarEstado(s) {
+    elChip.textContent = s.estado;
+    elChip.className = 'chip ' + (s.estado === 'conectada' ? 'on' : s.estado === 'reconectando' ? 're' : 'off');
+    if (s.mensaje) elFase.textContent = s.mensaje;
+    document.getElementById('btnCapturar').disabled = s.estado !== 'conectada';
+    document.getElementById('btnConectar').textContent = s.estado === 'conectada' ? 'Desconectar' : 'Conectar báscula';
+  }
+
+  function enganchar(b) {
+    b.on('estado', pintarEstado);
+    b.on('trama', function (t) { log(t.texto); });
+    b.on('peso', function (p) { elPeso.textContent = p.kg.toFixed(3); elPeso.style.color = p.kg > 0 ? 'var(--rojo)' : '#888'; });
+    b.on('fase', function (f) {
+      var txt = { vacio: 'Coloca paquete', pesando: 'Pesando… ' + f.kg.toFixed(3) + ' kg', estabilizando: 'Estabilizando…', estable: 'Agregado: ' + f.kg.toFixed(3) + ' kg', retirado: 'Coloca paquete' }[f.fase];
+      if (txt) elFase.textContent = txt;
+    });
+    b.on('estable', function (p) { elPeso.style.color = '#16a34a'; agregar(p.kg, 'báscula'); });
+    b.on('aviso', function (a) { alert(a.mensaje); });
+    b.on('error', function (e) { console.warn(e.error); });
+  }
+
+  function crear(simulada) {
+    if (bascula) bascula.desconectar();
+    bascula = simulada ? K.basculaSimulada({ intervalo: 250 }) : new K.Bascula();
+    enganchar(bascula);
+    document.getElementById('controlesSim').hidden = !simulada;
+    return bascula;
+  }
+
+  document.getElementById('btnConectar').addEventListener('click', async function () {
+    if (bascula && bascula.conectada) { await bascula.desconectar(); return; }
+    if (!K.Bascula.soportada) { alert('Web Serial solo existe en Chrome o Edge de escritorio. Prueba la báscula simulada.'); return; }
+    await crear(false).conectar();
+  });
+  document.getElementById('btnSimular').addEventListener('click', async function () { await crear(true).conectar(); });
+  document.getElementById('btnCapturar').addEventListener('click', function () {
+    var kg = bascula && bascula.capturar();
+    if (kg == null) { alert('Peso en cero'); return; }
+    if (!bascula.estable && !confirm('La báscula no está estable. ¿Capturar de todas formas?')) return;
+    agregar(kg, 'manual');
+  });
+  document.getElementById('btnColocar').addEventListener('click', function () { bascula.simulador.colocar(parseFloat(document.getElementById('pesoSim').value) || 0); });
+  document.getElementById('btnRetirar').addEventListener('click', function () { bascula.simulador.retirar(); });
+  document.getElementById('btnCaer').addEventListener('click', function () { bascula.simulador.caer(); });
+
+  // ---- tanda e impresión (solo demo) ----
+  function ean13(base12) {
+    var s = 0; for (var i = 0; i < 12; i++) s += parseInt(base12[i], 10) * (i % 2 === 0 ? 1 : 3);
+    return base12 + String((10 - (s % 10)) % 10);
+  }
+  function codigoIdentidad(plu) {
+    secuencia = (secuencia + 1) % 100000; localStorage.setItem('kana:demo:seq', String(secuencia));
+    return ean13('08' + String(plu).padStart(5, '0').slice(-5) + String(secuencia).padStart(5, '0'));
+  }
+  function agregar(kg, origen) { tanda.push({ kg: Math.round(kg * 1000) / 1000, origen: origen }); pintarTanda(); }
+  function pintarTanda() {
+    var tb = document.getElementById('tanda');
+    tb.innerHTML = tanda.length ? tanda.map(function (p, i) {
+      return '<tr><td>' + (i + 1) + '</td><td class="num">' + p.kg.toFixed(3) + ' kg</td><td class="sub">' + p.origen + '</td><td><button data-q="' + i + '">quitar</button></td></tr>';
+    }).join('') : '<tr><td colspan="4" class="sub">Sin pesadas.</td></tr>';
+    tb.querySelectorAll('button[data-q]').forEach(function (b) { b.addEventListener('click', function () { tanda.splice(+b.dataset.q, 1); pintarTanda(); }); });
+    var t = tanda.reduce(function (s, p) { return s + p.kg; }, 0);
+    document.getElementById('resumen').textContent = tanda.length ? tanda.length + ' pesadas · ' + t.toFixed(3) + ' kg' : '';
+  }
+  document.getElementById('btnLimpiar').addEventListener('click', function () { tanda = []; pintarTanda(); });
+  document.getElementById('btnImprimir').addEventListener('click', function () {
+    if (!tanda.length) { alert('No hay pesadas'); return; }
+    var plu = parseInt(document.getElementById('plu').value, 10) || 0, nombre = document.getElementById('nombre').value || 'Producto';
+    var area = document.getElementById('area');
+    var items = tanda.map(function (p) { return { kg: p.kg, codigo: codigoIdentidad(plu) }; });
+    area.innerHTML = items.map(function (it, i) {
+      return '<div class="etq"><div class="n">' + nombre + '</div><svg id="bc' + i + '"></svg><div class="p">' + it.kg.toFixed(3) + ' kg</div></div>';
+    }).join('');
+    items.forEach(function (it, i) { try { JsBarcode('#bc' + i, it.codigo, { format: 'EAN13', width: 1.6, height: 38, fontSize: 11, margin: 2 }); } catch (e) { console.warn(e); } });
+    setTimeout(function () { window.print(); }, 250);
+  });
+
+  pintarTanda();
+  if (K.Bascula.soportada) { crear(false).reconectar(); }
+})();
+</script>
+</body>
+</html>
