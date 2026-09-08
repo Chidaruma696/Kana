@@ -7,48 +7,56 @@
 <script src="../dist/kana.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <style>
-  :root { --tinta:#1b150d; --papel:#f6efe0; --rojo:#c62b3c; --tenue:#7a6f5f; --borde:#1b150d; }
+  :root { --fondo:#eef1f5; --tarjeta:#ffffff; --texto:#1f2937; --tenue:#6b7280; --linea:#e5e7eb; --acento:#2563eb; --lcd:#0f172a; --lcdtxt:#4ade80; }
   * { box-sizing:border-box; }
-  body { margin:0; font:14px/1.45 'Segoe UI', Arial, sans-serif; background:var(--papel); color:var(--tinta); }
-  header { border-bottom:3px solid var(--tinta); padding:12px 18px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
-  header h1 { margin:0; font-size:22px; letter-spacing:.5px; text-transform:uppercase; }
-  header .kicker { font-size:11px; color:var(--tenue); letter-spacing:.15em; text-transform:uppercase; }
-  .wrap { max-width:1100px; margin:16px auto; padding:0 14px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .card { background:#fff; border:3px solid var(--borde); padding:14px 16px; box-shadow:5px 5px 0 var(--tinta); }
-  .card h2 { font-size:11px; text-transform:uppercase; letter-spacing:.15em; color:var(--tenue); margin:0 0 10px; }
-  button { font:inherit; font-weight:700; border:2.5px solid var(--borde); background:#fff; padding:7px 12px; cursor:pointer; box-shadow:3px 3px 0 var(--tinta); }
-  button:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--tinta); }
-  button.primario { background:var(--rojo); color:#fff; }
-  button:disabled { opacity:.4; cursor:not-allowed; }
-  input, select { font:inherit; padding:7px 9px; border:2.5px solid var(--borde); background:#fff; }
-  #peso { font-size:64px; font-weight:900; color:var(--rojo); line-height:1; font-variant-numeric:tabular-nums; }
-  #fase { font-size:12px; color:var(--tenue); min-height:18px; margin-top:4px; text-transform:uppercase; letter-spacing:.1em; }
-  .chip { display:inline-block; padding:2px 10px; border:2px solid var(--borde); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; transform:rotate(-2deg); }
-  .on { background:#d9f3dc; } .off { background:#f8d7da; } .re { background:#fff3cd; }
-  .fila { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid #ddd; }
+  body { margin:0; font:15px/1.5 -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:var(--fondo); color:var(--texto); }
+  header { background:var(--tarjeta); border-bottom:1px solid var(--linea); padding:14px 22px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header .kicker { font-size:13px; color:var(--tenue); }
+  .wrap { max-width:1040px; margin:22px auto; padding:0 16px; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:760px) { .wrap { grid-template-columns:1fr; } }
+  .card { background:var(--tarjeta); border:1px solid var(--linea); border-radius:14px; padding:18px 20px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .card h2 { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--tenue); margin:0 0 12px; }
+  button { font:inherit; font-weight:500; border:1px solid var(--linea); background:#fff; color:var(--texto); padding:8px 14px; border-radius:10px; cursor:pointer; transition:background .15s; }
+  button:hover { background:#f3f4f6; }
+  button.primario { background:var(--acento); border-color:var(--acento); color:#fff; }
+  button.primario:hover { background:#1d4ed8; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  input, select { font:inherit; padding:8px 10px; border:1px solid var(--linea); border-radius:10px; background:#fff; }
+  .lcd { background:var(--lcd); border-radius:12px; padding:18px 20px 12px; text-align:right; }
+  #peso { font: 700 60px/1 ui-monospace, 'Cascadia Mono', Consolas, monospace; color:var(--lcdtxt); letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+  #peso::after { content:' kg'; font-size:20px; color:#94a3b8; }
+  #fase { font-size:13px; color:#94a3b8; min-height:20px; margin-top:6px; text-align:left; }
+  .chip { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .on { background:#dcfce7; color:#166534; } .off { background:#fee2e2; color:#991b1b; } .re { background:#fef3c7; color:#92400e; }
+  .fila { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:8px 4px; border-bottom:1px solid var(--linea); }
+  th { font-size:12px; color:var(--tenue); font-weight:600; }
   td.num { text-align:right; font-variant-numeric:tabular-nums; }
-  .sub { color:var(--tenue); font-size:12px; }
-  #log { font:11px/1.4 ui-monospace, Consolas, monospace; background:var(--tinta); color:#eee; padding:8px; height:140px; overflow:auto; white-space:pre-wrap; }
-  .etq { width:80mm; height:40mm; border:1px dashed #999; padding:2mm; margin:4px; display:inline-block; text-align:center; background:#fff; }
-  .etq .n { font-weight:800; font-size:13px; height:34px; overflow:hidden; }
-  .etq .p { font-size:16px; font-weight:900; }
+  .sub { color:var(--tenue); font-size:13px; }
+  a { color:var(--acento); }
+  #log { font:12px/1.5 ui-monospace, Consolas, monospace; background:var(--lcd); color:#cbd5e1; padding:10px 12px; border-radius:10px; height:150px; overflow:auto; white-space:pre-wrap; margin-top:10px; }
+  .etq { width:80mm; height:40mm; border:1px dashed #cbd5e1; padding:2mm; margin:4px; display:inline-block; text-align:center; background:#fff; }
+  .etq .n { font-weight:600; font-size:13px; height:34px; overflow:hidden; }
+  .etq .p { font-size:16px; font-weight:700; }
   @media print { body * { visibility:hidden; } #area, #area * { visibility:visible; } #area { position:absolute; left:0; top:0; } .etq { border:none; margin:0; page-break-after:always; } }
 </style>
 </head>
 <body>
 <header>
   <h1>Kana</h1>
-  <span class="kicker">秤 · demo de báscula por Web Serial</span>
+  <span class="kicker">demo de báscula por Web Serial</span>
   <span id="chip" class="chip off">desconectada</span>
 </header>
 
 <div class="wrap">
   <section class="card">
     <h2>Báscula</h2>
-    <div id="peso">0.000</div>
-    <div id="fase">Sin conexión</div>
+    <div class="lcd">
+      <div id="peso">0.000</div>
+      <div id="fase">Sin conexión</div>
+    </div>
     <div class="fila">
       <button id="btnConectar" class="primario">Conectar báscula</button>
       <button id="btnSimular">Usar báscula simulada</button>
@@ -106,12 +114,12 @@
   function enganchar(b) {
     b.on('estado', pintarEstado);
     b.on('trama', function (t) { log(t.texto); });
-    b.on('peso', function (p) { elPeso.textContent = p.kg.toFixed(3); elPeso.style.color = p.kg > 0 ? 'var(--rojo)' : '#888'; });
+    b.on('peso', function (p) { elPeso.textContent = p.kg.toFixed(3); elPeso.style.color = p.kg > 0 ? 'var(--lcdtxt)' : '#64748b'; });
     b.on('fase', function (f) {
       var txt = { vacio: 'Coloca paquete', pesando: 'Pesando… ' + f.kg.toFixed(3) + ' kg', estabilizando: 'Estabilizando…', estable: 'Agregado: ' + f.kg.toFixed(3) + ' kg', retirado: 'Coloca paquete' }[f.fase];
       if (txt) elFase.textContent = txt;
     });
-    b.on('estable', function (p) { elPeso.style.color = '#16a34a'; agregar(p.kg, 'báscula'); });
+    b.on('estable', function (p) { elPeso.style.color = '#facc15'; agregar(p.kg, 'báscula'); });
     b.on('aviso', function (a) { alert(a.mensaje); });
     b.on('error', function (e) { console.warn(e.error); });
   }
