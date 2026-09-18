@@ -190,15 +190,33 @@ class SerialTorrey {
     this._loop(onTexto, onCierre);
     if (this.sondeo > 0) {
       const enc = new TextEncoder();
-      this._timer = setInterval(async () => {
-        if (!this.puerto || !this.puerto.writable) return;
-        let w = null;
-        try { w = this.puerto.writable.getWriter(); await w.write(enc.encode(this.comandoSondeo)); }
-        catch { /* la lectura seguirá; el siguiente sondeo reintenta */ }
-        finally { if (w) { try { w.releaseLock(); } catch { /* ya suelto */ } } }
-      }, this.sondeo);
+      this._pendientes = 0;
+      this._timer = setInterval(() => this._sondear(enc), this.sondeo);
     }
   }
+
+  /**
+   * Manda el comando de sondeo sin esperar a que el dispositivo lo acepte. Si se
+   * espera (`await write`) y el USB se atora, el lock del escritor queda tomado
+   * para siempre, los sondeos siguientes fallan en silencio y la báscula, que solo
+   * habla cuando se le pregunta, enmudece. Aquí el write se encola, el lock se
+   * suelta al instante y, si se acumulan escrituras sin aceptar, se deja de insistir
+   * (el vigilante de Bascula reabre el puerto).
+   */
+  _sondear(enc) {
+    if (!this.puerto || !this.puerto.writable) return;
+    if (this._pendientes >= 3) return;
+    let w = null;
+    try {
+      w = this.puerto.writable.getWriter();
+      this._pendientes++;
+      w.write(enc.encode(this.comandoSondeo)).catch(() => {}).finally(() => { this._pendientes--; });
+    } catch { /* el escritor estaba tomado; el siguiente sondeo reintenta */ }
+    finally { if (w) { try { w.releaseLock(); } catch { /* ya suelto */ } } }
+  }
+
+  /** ¿Hay escrituras que el dispositivo no ha aceptado? */
+  get atorado() { return (this._pendientes || 0) >= 3; }
 
   async _loop(onTexto, onCierre) {
     const dec = new TextDecoder();
@@ -309,6 +327,8 @@ class Bascula {
    *   clave       clave de localStorage para lo anterior ('kana:auto')
    *   filtros     filtros de puerto para requestPort (p. ej. [{usbVendorId: 0x0403}])
    *   reintentos  intentos de reconexión si la conexión se cae (3)
+   *   silencio    ms sin recibir nada de la báscula antes de reabrir el puerto (4000; 0 = nunca)
+   *   lineaSuelta ms que una trama sin salto de línea espera antes de procesarse igual (600)
    */
   constructor(o = {}) {
     this.opciones = o;
@@ -319,7 +339,11 @@ class Bascula {
     this.recordar = o.recordar ?? true;
     this.clave = o.clave || 'kana:auto';
     this.reintentos = o.reintentos ?? 3;
+    this.silencio = o.silencio ?? 4000;
+    this.lineaSuelta = o.lineaSuelta ?? 600;
     this.filtros = o.filtros;
+    this.ultimaTrama = 0;
+    this._timerVigilante = null;
 
     this.estado = 'desconectada';
     this.peso = 0;
@@ -414,10 +438,39 @@ class Bascula {
     this._buffer = '';
     this.estab.reset();
     this._avisoUnidad = false;
+    this.ultimaTrama = Date.now();
+    this._vigilar();
     this._setEstado('conectada', 'Coloca paquete');
   }
 
+  /**
+   * Cada segundo revisa dos cosas: que sigan llegando tramas (si la báscula calla
+   * más de `silencio` ms, o el USB no acepta escrituras, se reabre el puerto como
+   * si se hubiera caído) y que una trama que llegó sin salto de línea no se quede
+   * esperando para siempre en el buffer.
+   */
+  _vigilar() {
+    if (this._timerVigilante) clearInterval(this._timerVigilante);
+    this._timerVigilante = setInterval(() => {
+      if (!this.conectada) return;
+      const ahora = Date.now();
+      if (this._buffer.trim() && ahora - this.ultimaTrama >= this.lineaSuelta) {
+        const linea = this._buffer.trim();
+        this._buffer = '';
+        this._procesarLinea(linea, ahora);
+      }
+      const callada = this.silencio > 0 && ahora - this.ultimaTrama >= this.silencio;
+      const atorada = !!this.transporte.atorado;
+      if (callada || atorada) {
+        this.emitir('aviso', { tipo: 'silencio', mensaje: atorada ? 'El puerto no acepta datos; se reabre.' : 'La báscula no responde; se reabre el puerto.' });
+        const puerto = this._puerto;
+        this._cerrar(false).then(() => this._onCierre(puerto));
+      }
+    }, 1000);
+  }
+
   async _cerrar(cerrarPuerto) {
+    if (this._timerVigilante) { clearInterval(this._timerVigilante); this._timerVigilante = null; }
     if (this._timerThrottle) { clearTimeout(this._timerThrottle); this._timerThrottle = null; }
     if (this._timerEspera) { clearTimeout(this._timerEspera); this._timerEspera = null; }
     await this.transporte.cerrar(cerrarPuerto);
@@ -473,6 +526,7 @@ class Bascula {
 
   _onTexto(texto) {
     this._buffer += texto;
+    this.ultimaTrama = Date.now();
     this.emitir('trama', { texto });
     if (this._buffer.length > 2048) this._buffer = this._buffer.slice(-512);
     this._procesarBuffer();

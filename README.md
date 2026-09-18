@@ -127,6 +127,8 @@ Open `demo/index.html` in Chrome to see it working with a real or simulated scal
 | `filtros` | | Filters for `requestPort`, e.g. `[{ usbVendorId: 0x0403 }]` |
 | `recordar` | `true` | Remembers the port so `reconectar()` works on the next visit |
 | `reintentos` | `3` | Reconnection attempts if the connection drops |
+| `silencio` | `4000` | ms without hearing from the scale before the port is reopened automatically (`0` = never) |
+| `lineaSuelta` | `600` | ms a frame without a line break waits before being processed anyway |
 | `transporte` | `SerialTorrey` | Another transport with the same interface (`TransporteSimulado`) |
 
 Methods: `conectar(puerto?)`, `reconectar()`, `desconectar()`, `capturar()`, `on(evento, fn)` (returns the function to remove the listener), `off()`. Properties: `estado`, `conectada`, `peso`, `estable`, `ultimaLectura`. `Bascula.soportada` tells you whether the browser has Web Serial.

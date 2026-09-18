@@ -136,3 +136,35 @@ test('sin transporte real, conectar falla limpio en Node', async () => {
   assert.equal(b.estado, 'desconectada');
   assert.match(errores[0], /Web Serial/);
 });
+
+// ---------------------------------------------------------------- vigilante
+
+test('si la báscula calla, se reabre el puerto sola', async () => {
+  const b = basculaSimulada({ silencio: 300, reintentos: 1 });
+  const estados = [];
+  const avisos = [];
+  b.on('estado', (e) => estados.push(e.estado));
+  b.on('aviso', (a) => avisos.push(a.tipo));
+  await b.conectar();
+  await b.simulador.cerrar();                       // el transporte deja de mandar tramas
+  await new Promise((r) => setTimeout(r, 1500));    // > silencio + vigilante
+  assert.ok(avisos.includes('silencio'), 'avisa del silencio');
+  assert.ok(estados.includes('reconectando'), 'entra en reconexión');
+  await new Promise((r) => setTimeout(r, 1400));    // la reconexión espera 1200 ms
+  assert.equal(b.estado, 'conectada');
+  assert.ok(b.simulador._timer, 'el transporte vuelve a mandar tramas');
+  await b.desconectar();
+});
+
+test('una trama sin salto de línea se procesa igual tras la espera', async () => {
+  const transporte = new TransporteSimulado({ intervalo: 100000 });
+  const b = new Bascula({ transporte, lineaSuelta: 100 });
+  const pesos = [];
+  b.on('peso', (p) => pesos.push(p.kg));
+  await b.conectar();
+  transporte._onTexto('ST,GS,+   1.250 kg');        // sin \r\n
+  assert.deepEqual(pesos, [], 'sin salto de línea no se procesa de inmediato');
+  await new Promise((r) => setTimeout(r, 1200));    // el vigilante pasa cada segundo
+  assert.deepEqual(pesos, [1.25]);
+  await b.desconectar();
+});

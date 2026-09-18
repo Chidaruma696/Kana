@@ -127,6 +127,8 @@ Abre `demo/index.html` en Chrome para verlo funcionar con la báscula real o con
 | `filtros` | | Filtros para `requestPort`, p. ej. `[{ usbVendorId: 0x0403 }]` |
 | `recordar` | `true` | Recuerda el puerto para `reconectar()` en la siguiente visita |
 | `reintentos` | `3` | Intentos de reconexión si se cae la conexión |
+| `silencio` | `4000` | ms sin recibir nada de la báscula antes de reabrir el puerto solo (`0` = nunca) |
+| `lineaSuelta` | `600` | ms que una trama sin salto de línea espera antes de procesarse igual |
 | `transporte` | `SerialTorrey` | Otro transporte con la misma interfaz (`TransporteSimulado`) |
 
 Métodos: `conectar(puerto?)`, `reconectar()`, `desconectar()`, `capturar()`, `on(evento, fn)` (devuelve la función para quitarlo), `off()`. Propiedades: `estado`, `conectada`, `peso`, `estable`, `ultimaLectura`. `Bascula.soportada` dice si el navegador tiene Web Serial.
